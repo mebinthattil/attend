@@ -1,5 +1,5 @@
 // Service Worker for caching attendance tracker assets
-const CACHE_NAME = 'attendance-tracker-' + 'commit-hash';
+const CACHE_NAME = 'attendance-tracker-' + '5d0f359';
 const urlsToCache = [
   '/index.html',
   '/style.min.css',
