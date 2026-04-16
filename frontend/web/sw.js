@@ -1,9 +1,8 @@
-const CACHE_NAME = 'attend-pwa-v2';
+const CACHE_NAME = 'attend-pwa-v3';
 const ASSETS = [
   'index.html',
   'style.css',
   'script.js',
-  'i.js',
   'chart.min.js',
   'mapping.json',
   'manifest.json',

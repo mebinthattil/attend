@@ -5,12 +5,10 @@ Main entrypoint for the PESU Attendance Tracker.
 Run with environment toggles to choose which components start:
  - ENABLE_BACKEND_API: start API (defaults to true)
  - ENABLE_BACKEND_WEB: mount & serve static frontend (defaults to true)
- - ENABLE_BACKEND_TELEGRAM: launch the telegram bot as a subprocess (defaults to false)
 
 Examples:
-    # Run API and bot, but do not serve frontend
+    # Run API only, but do not serve frontend
     export ENABLE_BACKEND_WEB=false
-    export ENABLE_BACKEND_TELEGRAM=true
     uv run main.py
 """
 import colorama
@@ -25,9 +23,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.gzip import GZipMiddleware
 from dataclasses import dataclass
-import subprocess
-import atexit
-import sys
 from typing import Dict, Any, Optional, Union, List
 import os
 import time
@@ -136,9 +131,6 @@ class AppSettings:
             "true",
             "yes",
         )
-        self.ENABLE_BACKEND_TELEGRAM = os.getenv(
-            "ENABLE_BACKEND_TELEGRAM", "false"
-        ).lower() in ("1", "true", "yes")
 
 
 def load_mappings_config() -> MappingsConfig:
@@ -1185,21 +1177,6 @@ async def serve_chart_js():
     return response
 
 
-@app.get("/i.js", include_in_schema=False)
-async def serve_i_js():
-    repo_root = Path(__file__).resolve().parent
-    file_path = repo_root / "frontend" / "web" / "i.js"
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="i.js not found")
-    
-    response = FileResponse(
-        path=file_path,
-        media_type="application/javascript",
-        headers={"Cache-Control": "public, max-age=31536000, immutable"}
-    )
-    return response
-
-
 if settings.ENABLE_BACKEND_WEB:
     app.mount("/", StaticFiles(directory="frontend/web", html=True), name="frontend")
 else:
@@ -1251,84 +1228,20 @@ def run(argv: list | None = None) -> None:
     parser = argparse.ArgumentParser()
     args = parser.parse_args(argv)
 
-    # Start Telegram bot subprocess if enabled
-    bot_proc = None
-    try:
-        if settings.ENABLE_BACKEND_TELEGRAM:
-            telegram_bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
-            if not telegram_bot_token:
-                print(
-                    "ERROR: ENABLE_BACKEND_TELEGRAM is enabled but TELEGRAM_BOT_TOKEN is not set in .env"
-                )
-                print(
-                    "Please add TELEGRAM_BOT_TOKEN to your .env file or disable the Telegram bot."
-                )
-                sys.exit(1)
-
-            tg_bot_path = (
-                Path(__file__).resolve().parent / "frontend" / "telegram" / "tg_bot.py"
-            )
-            if tg_bot_path.exists():
-                cmd = [sys.executable, str(tg_bot_path)]
-                env = os.environ.copy()
-                bot_proc = subprocess.Popen(cmd, env=env, start_new_session=True)
-
-                def _terminate_bot():
-                    try:
-                        if bot_proc and bot_proc.poll() is None:
-                            bot_proc.terminate()
-                            bot_proc.wait(timeout=5)
-                    except Exception:
-                        try:
-                            bot_proc.kill()
-                        except Exception:
-                            pass
-
-                atexit.register(_terminate_bot)
-                print(f"Started telegram bot subprocess (pid={bot_proc.pid})")
-            else:
-                print(
-                    f"Telegram bot file not found at: {tg_bot_path}, skipping bot start"
-                )
-
-        # Optionally start the web server.
-        # Set ENABLE_BACKEND_WEB=1 (or true) in the environment to enable.
-        if settings.ENABLE_BACKEND_API:
-            if settings.ENABLE_BACKEND_WEB:
-                print(f"Starting web + API server on port {settings.PORT}...")
-            else:
-                print(
-                    f"Starting API server (frontend disabled) on port {settings.PORT}..."
-                )
-            uvicorn.run(
-                "main:app", host="0.0.0.0", port=settings.PORT, reload=settings.DEBUG
-            )
+    # Optionally start the web server.
+    # Set ENABLE_BACKEND_WEB=1 (or true) in the environment to enable.
+    if settings.ENABLE_BACKEND_API:
+        if settings.ENABLE_BACKEND_WEB:
+            print(f"Starting web + API server on port {settings.PORT}...")
         else:
-            print("API server disabled (ENABLE_BACKEND_API set to false)")
-            if bot_proc:
-                print("Running in bot-only mode. Press Ctrl+C to exit.")
-                try:
-                    bot_proc.wait()
-                except KeyboardInterrupt:
-                    print("\nShutting down...")
-            # Keep the process alive if only running the bot
-            if bot_proc:
-                print("Running in bot-only mode. Press Ctrl+C to exit.")
-                try:
-                    bot_proc.wait()
-                except KeyboardInterrupt:
-                    print("\nShutting down...")
-    finally:
-        # Ensure subprocess is cleaned up on exit
-        if bot_proc and bot_proc.poll() is None:
-            try:
-                bot_proc.terminate()
-                bot_proc.wait(timeout=5)
-            except Exception:
-                try:
-                    bot_proc.kill()
-                except Exception:
-                    pass
+            print(
+                f"Starting API server (frontend disabled) on port {settings.PORT}..."
+            )
+        uvicorn.run(
+            "main:app", host="0.0.0.0", port=settings.PORT, reload=settings.DEBUG
+        )
+    else:
+        print("API server disabled (ENABLE_BACKEND_API set to false)")
 
 
 if __name__ == "__main__":

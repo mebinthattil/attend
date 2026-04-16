@@ -100,7 +100,7 @@ function buildNavbar() {
 function createGitHubLink() {
     const githubLink = document.createElement('a');
     githubLink.id = 'github-link';
-    githubLink.href = 'https://github.com/polarhive/attend';
+    githubLink.href = 'https://github.com/mebinthattil/attend';
     githubLink.target = '_blank';
     githubLink.rel = 'noopener noreferrer';
     githubLink.className = 'icon-btn';
@@ -500,7 +500,7 @@ const LOG_TEMPLATES = {
     'semester.fetch_error': 'Error fetching semesters: ${error}',
     'network.online': 'Back online! You can fetch new attendance data.',
     'network.offline': 'You are offline. App will work with cached data.',
-    'version.info': 'Version: https://github.com/polarhive/attend/commit/${version}',
+    'version.info': 'Version: https://github.com/mebinthattil/attend/commit/${version}',
 };
 
 function renderLogTemplate(key, params = {}) {
