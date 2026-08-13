@@ -58,6 +58,8 @@
         "UE24CS341A": "SE",
         "UE24CS351A": "DBMS",
         "UE24CS352A": "ML",
+        "UE24CS342AA3" : "IOT",
+        "UE24CS343AB2" : "BD",
         "UE24MA241B": "LA",
         "UE24MA242A": "MCSE",
         "UE25CS151A": "Python",
