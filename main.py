@@ -571,7 +571,7 @@ class PESUAttendanceScraper:
         # Make a single best-effort preparatory request (semesters); avoid the heavier admin endpoint to reduce requests
         try:
             r_sem = self.session.get(
-                f"{self.BASE_URL}/a/studentProfilePESU/getStudentSemestersPESU",
+                f"{self.BASE_URL}/s/studentProfile/getStudentSemestersPESU",
                 params={"_": int(time.time() * 1000)},
                 headers=headers,
                 timeout=15,
@@ -590,7 +590,7 @@ class PESUAttendanceScraper:
         the <option> tags (e.g., batchClassId values). Returns None if nothing
         can be discovered.
         """
-        url = f"{self.BASE_URL}/a/studentProfilePESU/getStudentSemestersPESU"
+        url = f"{self.BASE_URL}/s/studentProfile/getStudentSemestersPESU"
         headers = {
             "X-Requested-With": "XMLHttpRequest",
             "X-CSRF-Token": csrf_token,
